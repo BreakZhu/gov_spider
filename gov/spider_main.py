@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from time import sleep
 from mysql_handler import MysqlHandler
 from html_downloader import HtmlDownloader
 from html_parser import HtmlParser, town_parser
@@ -40,9 +41,15 @@ class CodeSpider(object):
                 province_id = self.mysql_handler.insert(1, province_name, None, None)
                 if province_id == 0:
                     continue
+                sleep(5)
                 # 记录正在下载、解析的url，便于分析错误
                 downloading_url = province_url
-                html_content = self.html_downloader.download(downloading_url)
+                try:
+                    html_content = self.html_downloader.download(downloading_url)
+                except Exception as e:
+                    sleep(10)
+                    print e, "重新下载 省份"
+                    html_content = self.html_downloader.download(downloading_url)
                 self.city_url_list = self.html_parser.city_parser(html_content, self.split_url)
                 for city_name, city_url, city_code in self.city_url_list:
                     city_id = self.mysql_handler.insert(2, city_name, province_id, city_code)
@@ -51,7 +58,13 @@ class CodeSpider(object):
                         continue
                     # 记录正在下载、解析的url，便于分析错误
                     downloading_url = city_url
-                    html_content = self.html_downloader.download(downloading_url)
+                    try:
+                        html_content = self.html_downloader.download(downloading_url)
+                    except Exception as e:
+                        sleep(10)
+                        print e, "重新下载 直辖市"
+                        html_content = self.html_downloader.download(downloading_url)
+
                     self.county_url_list = self.html_parser.county_parser(html_content, self.split_url + province_code + "/")
                     for county_name, county_url, county_code in self.county_url_list:
                         county_id = self.mysql_handler.insert(3, county_name, city_id, county_code)
@@ -59,10 +72,17 @@ class CodeSpider(object):
                             continue
                         # 记录正在下载、解析的url，便于分析错误
                         downloading_url = county_url
-                        html_content = self.html_downloader.download(downloading_url)
+                        try:
+                            html_content = self.html_downloader.download(downloading_url)
+                        except Exception as e:
+                            sleep(10)
+                            print e, "重新下载乡镇"
+                            html_content = self.html_downloader.download(downloading_url)
                         self.town_url_list = town_parser(html_content, self.split_url)
                         for town_name, town_url, town_code in self.town_url_list:
                             # 输出抓取到的乡镇街道的名称、链接（实际不需要）、编号代码
+                            if town_code == "130408100000":
+                                print town_url
                             print(town_name, town_url, town_code)
                             self.mysql_handler.insert(4, town_name, county_id, town_code)
             self.mysql_handler.close()

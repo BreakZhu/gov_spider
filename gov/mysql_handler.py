@@ -5,7 +5,7 @@ import MySQLdb.cursors
 
 class MysqlHandler(object):
     def __init__(self):
-        self.db = MySQLdb.connect(host="localhost", user="root", passwd="root", db="code_spider", charset="utf8")
+        self.db = MySQLdb.connect(host="localhost", user="root", passwd="root", db="code_spider", charset="gbk")
 
     # 第一个参数：1-插入一个省数据；2-市数据；3-区数据；4-乡镇街道数据
     # 第二个参数：省市区街道名称
